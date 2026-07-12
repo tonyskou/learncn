@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#534AB7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Μαθαίνω!">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-startup-image" href="icon-512.png">
+<title>Μαθαίνω! — 学习希腊语</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --purple-mid: #7F77DD;
+    --purple-dark: #3C3489;
+    --coral: #D85A30;
+    --teal: #0F6E56;
+    --green: #3B6D11;
+    --green-light: #EAF3DE;
+    --green-border: #97C459;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --red: #D84040;
+    --text: #1a1a1a;
+    --text2: #555;
+    --text3: #888;
+    --bg: #f7f6f3;
+    --bg2: #ffffff;
+    --border: #ddd;
+    --radius: 12px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bot: env(safe-area-inset-bottom, 0px);
+  }
+
+  html { height: 100%; height: -webkit-fill-available; }
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* HEADER */
+  header {
+    background: var(--purple);
+    color: white;
+    padding: 12px 16px 10px;
+    padding-top: calc(12px + var(--safe-top));
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 10;
+  }
+  .header-left { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; gap: 10px; }
+  .app-title { font-size: 19px; font-weight: 700; letter-spacing: 0.3px; }
+  .app-sub { font-size: 11px; opacity: 0.75; margin-top: 1px; }
+  .header-stats { text-align: right; font-size: 12px; opacity: 0.88; line-height: 1.5; }
+  .logout-btn {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white;
+    border-radius: 8px; padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: inherit;
+    white-space: nowrap;
+  }
+  .logout-btn:active { background: rgba(255,255,255,0.3); }
+
+  /* SYNC DOT */
+  .sync-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    margin-left: 4px; vertical-align: middle; position: relative; top: -1px;
+    background: #ccc;
+  }
+  .sync-dot.ok   { background: #5FDF8F; }
+  .sync-dot.busy { background: #FFD25A; animation: pulse 1s infinite; }
+  .sync-dot.off  { background: #ccc; }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+  /* TABS */
+  .tabs {
+    display: -webkit-flex; display: flex;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0; z-index: 9;
+  }
+  .tab {
+    -webkit-flex: 1; flex: 1;
+    padding: 11px 4px; text-align: center;
+    font-size: 12px; font-weight: 500;
+    color: var(--text3); cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    -webkit-transition: all 0.15s; transition: all 0.15s;
+    -webkit-user-select: none; user-select: none;
+  }
+  .tab.active { color: var(--purple); border-bottom-color: var(--purple); background: #faf9ff; }
+
+  /* MAIN */
+  main {
+    -webkit-flex: 1; flex: 1;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 14px 16px;
+    padding-bottom: calc(14px + var(--safe-bot));
+    touch-action: pan-y;
+  }
+  /* Ensure tab content panels also allow scrolling if they get their own scroll context */
+  #tab-learn, #tab-review, #tab-stats, #tab-ab {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (min-width: 680px) {
+    main { padding: 20px 10%; }
+    .word-card { padding: 3rem 2rem; }
+    .syl { font-size: 48px !important; }
+    .syl-sep { font-size: 38px !important; }
+    .syl-lower { font-size: 26px !important; }
+    .syl-sep-lower { font-size: 20px !important; }
+    .chips { gap: 10px; }
+    .chip { font-size: 15px; padding: 8px 16px; }
+    .audio-grid, .word-nav { gap: 12px; }
+    .audio-btn, .word-nav button { padding: 16px; font-size: 17px; }
+    .celeb-star { font-size: 72px; }
+    .celeb-title { font-size: 28px; }
+    .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* AUTH SCREENS */
+  #auth-screen {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg); z-index: 998;
+    display: -webkit-flex; display: flex;
+    -webkit-flex-direction: column; flex-direction: column;
+    padding: 40px 24px; padding-top: calc(40px + var(--safe-top));
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  .auth-title { font-size: 22px; font-weight: 800; color: var(--purple-dark); margin-bottom: 6px; }
+  .auth-sub  { font-size: 14px; color: var(--text3); margin-bottom: 28px; line-height: 1.5; }
+
+  .auth-input {
+    width: 100%; padding: 14px 16px; border-radius: 14px;
+    border: 1.5px solid var(--border); font-size: 16px;
+    background: var(--bg2); font-family: inherit; margin-bottom: 12px;
+    -webkit-appearance: none; appearance: none;
+  }
+  .auth-input:focus { border-color: var(--purple-mid); outline: none; }
+
+  .auth-btn {
+    width: 100%; padding: 15px; border-radius: 14px;
+    border: none; font-size: 17px; font-weight: 700;
+    cursor: pointer; font-family: inherit; margin-bottom: 10px;
+    -webkit-appearance: none; appearance: none;
+  }
+  .auth-btn.primary { background: var(--purple); color: white; }
+  .auth-btn.primary:active { opacity: 0.85; }
+  .auth-btn.secondary { background: var(--bg2); color: var(--purple-dark); border: 1.5px solid var(--border); }
+  .auth-btn.secondary:active { background: var(--purple-light); }
+
+  .auth-toggle { text-align: center; font-size: 13px; color: var(--text3); margin-top: 16px; }
+  .auth-toggle a { color: var(--purple); font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+  .auth-error {
+    background: #FFF0F0; border: 1px solid #FFD0D0; color: var(--red);
+    border-radius: 10px; padding: 10px 14px; font-size: 13px;
+    margin-bottom: 16px; display: none;
+  }
+
+  /* SET NAV */
+  .set-nav { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .nav-btn {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 9px; width: 40px; height: 40px;
+    display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
+    font-size: 16px; cursor: pointer; color: var(--text);
+    flex-shrink: 0; -webkit-appearance: none; appearance: none;
+  }
+  .nav-btn:disabled { opacity: 0.3; }
+  .nav-btn:active { background: var(--purple-light); }
+  .set-info { -webkit-flex: 1; flex: 1; }
+  .set-title { font-size: 16px; font-weight: 700; color: var(--purple-dark); }
+  .set-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* CHIPS */
+  .chips { display: -webkit-flex; display: flex; gap: 6px; -webkit-flex-wrap: wrap; flex-wrap: wrap; margin-bottom: 14px; }
+  .chip {
+    padding: 6px 12px; border-radius: 20px; font-size: 13px;
+    cursor: pointer; border: 1px solid var(--border);
+    background: var(--bg2); color: var(--text2);
+    -webkit-user-select: none; user-select: none;
+    -webkit-transition: all 0.12s; transition: all 0.12s;
+  }
+  .chip.active { background: var(--purple-light); border-color: #AFA9EC; color: var(--purple-dark); font-weight: 700; }
+  .chip.done { background: var(--green-light); border-color: var(--green-border); color: var(--green); }
+  .chip.done.active { border-color: var(--green); }
+
+  /* PROGRESS */
+  .progress-row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .progress-label { font-size: 12px; color: var(--text3); white-space: nowrap; }
+  .progress-track { -webkit-flex: 1; flex: 1; height: 7px; background: #e0e0e0; border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--purple-mid); border-radius: 99px; -webkit-transition: width 0.3s; transition: width 0.3s; }
+  .progress-count { font-size: 13px; color: var(--purple); font-weight: 700; }
+
+  /* WORD CARD */
+  .word-card {
+    background: var(--bg2); border: 2px solid var(--border);
+    border-radius: 20px; padding: 2rem 1rem;
+    text-align: center; cursor: pointer;
+    -webkit-transition: all 0.18s; transition: all 0.18s;
+    margin-bottom: 12px;
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .word-card.learned { background: var(--green-light); border-color: var(--green-border); }
+  .word-card:active { -webkit-transform: scale(0.97); transform: scale(0.97); }
+  .syllables-display {
+    display: -webkit-flex; display: flex;
+    -webkit-justify-content: center; justify-content: center;
+    -webkit-align-items: baseline; align-items: baseline;
+    -webkit-flex-wrap: wrap; flex-wrap: wrap;
+    gap: 0; margin-bottom: 14px;
+  }
+  .syl { font-size: 36px; font-weight: 800; letter-spacing: 1px; }
+  .syl-sep { font-size: 30px; color: #ccc; margin: 0 3px; font-weight: 300; }
+  .syllables-display-lower {
+    display: -webkit-flex; display: flex;
+    -webkit-justify-content: center; justify-content: center;
+    -webkit-align-items: baseline; align-items: baseline;
+    -webkit-flex-wrap: wrap; flex-wrap: wrap;
+    gap: 0; margin-bottom: 16px; opacity: 0.7;
+  }
+  .syl-lower { font-size: 19px; font-weight: 600; letter-spacing: 0.5px; }
+  .syl-sep-lower { font-size: 16px; color: #ccc; margin: 0 2px; font-weight: 300; }
+  .word-gap { display: inline-block; width: 18px; }
+  .word-gap-lower { display: inline-block; width: 10px; }
+  .card-hint { font-size: 14px; color: var(--text3); }
+  .word-card.learned .card-hint { color: var(--green); font-weight: 600; }
+
+  /* AUDIO */
+  .audio-grid { display: -webkit-flex; display: flex; gap: 8px; margin-bottom: 12px; }
+  .audio-btn {
+    -webkit-flex: 1; flex: 1; padding: 13px 8px;
+    border-radius: var(--radius); border: 1px solid var(--border);
+    background: var(--bg2); font-size: 15px; cursor: pointer;
+    color: var(--text); -webkit-appearance: none; appearance: none; font-family: inherit;
+  }
+  .audio-btn:active { background: var(--purple-light); }
+
+  /* LOCK */
+  .lock-notice {
+    background: var(--amber-light); border-radius: var(--radius);
+    padding: 12px 14px; margin-bottom: 12px; text-align: center;
+    border: 1px solid #FAC775;
+  }
+  .lock-title { font-size: 13px; color: var(--amber); font-weight: 700; margin-bottom: 4px; }
+  .lock-sub { font-size: 12px; color: #854F0B; }
+
+  /* WORD NAV */
+  .word-nav { display: -webkit-flex; display: flex; gap: 8px; margin-bottom: 16px; }
+  .word-nav button {
+    -webkit-flex: 1; flex: 1; padding: 13px;
+    border-radius: var(--radius); border: 1px solid var(--border);
+    background: var(--bg2); font-size: 15px; cursor: pointer;
+    color: var(--text); -webkit-appearance: none; appearance: none; font-family: inherit;
+  }
+  .word-nav button:disabled { opacity: 0.3; }
+  .word-nav button:active { background: var(--purple-light); }
+
+  /* CELEBRATION */
+  .celebration {
+    background: var(--purple-light); border: 2px solid #AFA9EC;
+    border-radius: 20px; padding: 24px 20px; text-align: center; margin-bottom: 16px;
+  }
+  .celeb-star { font-size: 60px; margin-bottom: 10px; }
+  .celeb-title { font-size: 23px; font-weight: 800; color: var(--purple-dark); margin-bottom: 6px; }
+  .celeb-sub { font-size: 15px; color: var(--purple); margin-bottom: 14px; }
+  .celeb-note {
+    background: white; border-radius: 10px; padding: 10px 14px;
+    margin-bottom: 16px; font-size: 13px; color: var(--purple); line-height: 1.6;
+  }
+  .celeb-btn {
+    background: var(--purple); color: white; border: none;
+    border-radius: var(--radius); padding: 14px 28px;
+    font-size: 17px; font-weight: 700; cursor: pointer;
+    font-family: inherit; -webkit-appearance: none; appearance: none;
+  }
+  .celeb-btn:active { opacity: 0.85; }
+
+  /* REVIEW */
+  .review-grid { display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; gap: 8px; }
+  .review-set {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; cursor: pointer;
+    -webkit-user-select: none; user-select: none;
+  }
+  .review-set.completed { border-color: var(--green-border); border-width: 1.5px; }
+  .review-set:active { background: #f5f5f5; }
+  .review-set-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .review-set-meta { font-size: 12px; color: var(--text3); margin-top: 3px; }
+  .review-set.completed .review-set-meta { color: var(--green); }
+
+  /* STATS */
+  .stats-grid { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .stat-card {
+    background: var(--bg2); border-radius: var(--radius); padding: 16px;
+    text-align: center; border: 1px solid var(--border);
+    -webkit-flex: 1 1 calc(50% - 5px); flex: 1 1 calc(50% - 5px);
+    min-width: 120px;
+  }
+  .stat-num { font-size: 30px; font-weight: 800; color: var(--purple); }
+  .stat-label { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .streak-card {
+    background: var(--purple-light); border-radius: var(--radius);
+    padding: 18px; text-align: center; margin-bottom: 12px;
+    border: 1px solid #AFA9EC;
+  }
+  .streak-num { font-size: 44px; font-weight: 800; color: var(--purple-dark); }
+  .streak-label { font-size: 14px; color: var(--purple); margin-top: 4px; }
+
+  /* OVERLAYS */
+  #speech-init {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(83,74,183,0.93); z-index: 999;
+    display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
+    -webkit-flex-direction: column; flex-direction: column;
+    padding: 30px; text-align: center;
+  }
+  #speech-init h2 { color: white; font-size: 22px; font-weight: 700; margin-bottom: 12px; }
+  #speech-init p  { color: rgba(255,255,255,0.85); font-size: 15px; margin-bottom: 28px; line-height: 1.6; }
+  #speech-init button {
+    background: white; color: var(--purple); border: none;
+    border-radius: 14px; padding: 16px 36px; font-size: 18px;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+  }
+
+  /* AB TAB — Alphabet & Grammar */
+  .ab-section { margin-bottom: 20px; }
+  .ab-section-title {
+    font-size: 17px; font-weight: 700; color: var(--purple-dark);
+    margin-bottom: 10px; display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center; gap: 6px;
+  }
+  .ab-letter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px; margin-bottom: 8px;
+  }
+  .ab-letter-card {
+    background: var(--bg2); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 10px 6px;
+    text-align: center; cursor: pointer;
+    -webkit-transition: all 0.12s; transition: all 0.12s;
+    -webkit-user-select: none; user-select: none;
+    touch-action: pan-y;
+  }
+  .ab-letter-card:active { background: var(--purple-light); border-color: #AFA9EC; }
+  .ab-letter-upper { font-size: 22px; font-weight: 800; color: var(--purple-dark); line-height: 1.2; }
+  .ab-letter-lower { font-size: 18px; font-weight: 700; color: var(--purple-mid); line-height: 1.2; }
+  .ab-letter-name { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+  .ab-digraph-row {
+    display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    background: var(--bg2); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 10px 14px; margin-bottom: 8px;
+    gap: 10px; cursor: pointer;
+    -webkit-transition: all 0.12s; transition: all 0.12s;
+    touch-action: pan-y;
+  }
+  .ab-digraph-row:active { background: var(--purple-light); }
+  .ab-digraph-letters { font-size: 20px; font-weight: 800; color: var(--purple-dark); min-width: 44px; text-align: center; }
+  .ab-digraph-lower { font-size: 16px; font-weight: 700; color: var(--purple-mid); min-width: 44px; text-align: center; }
+  .ab-digraph-sound { font-size: 14px; color: var(--teal); font-weight: 600; }
+  .ab-digraph-example { font-size: 12px; color: var(--text3); }
+  .ab-speak-btn {
+    background: var(--purple-light); border: none; border-radius: 50%;
+    width: 34px; height: 34px; font-size: 16px; cursor: pointer;
+    display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
+    flex-shrink: 0; margin-left: auto;
+    -webkit-appearance: none; appearance: none;
+  }
+  .ab-speak-btn:active { background: #D8D4F8; }
+
+  .ab-grammar-card {
+    background: var(--bg2); border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 14px; margin-bottom: 10px;
+  }
+  .ab-grammar-title { font-size: 15px; font-weight: 700; color: var(--purple-dark); margin-bottom: 6px; }
+  .ab-grammar-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  .ab-grammar-example {
+    display: inline-block; background: var(--purple-light);
+    border-radius: 8px; padding: 3px 8px; font-size: 13px;
+    margin: 2px 2px; color: var(--purple-dark); font-weight: 600;
+  }
+  .ab-grammar-highlight {
+    color: var(--coral); font-weight: 700;
+  }
+
+  @media (min-width: 680px) {
+    .ab-letter-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+    .ab-letter-upper { font-size: 28px; }
+    .ab-letter-lower { font-size: 22px; }
+    .ab-letter-name { font-size: 13px; }
+  }
+
+  /* STORIES TAB */
+  .story-card {
+    background: var(--bg2); border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    cursor: pointer; -webkit-transition: all 0.12s; transition: all 0.12s;
+  }
+  .story-card:active { background: var(--purple-light); border-color: #AFA9EC; }
+  .story-card-id { font-size: 12px; color: var(--text3); }
+  .story-card-title { font-size: 16px; font-weight: 700; color: var(--purple-dark); margin-top: 3px; }
+  .story-card-preview {
+    font-size: 13px; color: var(--text2); margin-top: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .story-back-btn {
+    background: none; border: 1px solid var(--border);
+    border-radius: 9px; padding: 8px 16px; font-size: 14px;
+    cursor: pointer; color: var(--purple); font-family: inherit;
+    margin-bottom: 14px; -webkit-appearance: none; appearance: none;
+  }
+  .story-back-btn:active { background: var(--purple-light); }
+
+  .story-detail-title {
+    font-size: 20px; font-weight: 800; color: var(--purple-dark);
+    margin-bottom: 16px; text-align: center;
+  }
+
+  .story-text {
+    font-size: 18px; line-height: 2.2; text-align: center;
+    background: var(--bg2); border-radius: 16px;
+    padding: 20px 16px; border: 1.5px solid var(--border);
+  }
+
+  .story-word {
+    display: inline-block; cursor: pointer;
+    padding: 2px 4px; border-radius: 6px;
+    -webkit-transition: all 0.1s; transition: all 0.1s;
+    touch-action: pan-y;
+    margin: 0 1px;
+  }
+  .story-word:active {
+    background: var(--purple-light);
+    -webkit-transform: scale(1.08); transform: scale(1.08);
+  }
+  .story-punct { display: inline; margin-left: -2px; }
+
+  .story-speak-all-btn {
+    display: block; margin: 14px auto 0;
+    background: var(--purple); color: white; border: none;
+    border-radius: 14px; padding: 14px 28px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: inherit; -webkit-appearance: none; appearance: none;
+  }
+  .story-speak-all-btn:active { opacity: 0.85; }
+
+  /* Scrollbar visibility on desktop */
+  main::-webkit-scrollbar {
+    width: 6px;
+  }
+  main::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  main::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 99px;
+  }
+  main::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+  }
+</style>
+</head>
+<body>
+
+<!-- iOS speech init overlay -->
+<div id="speech-init" style="display:none;">
+  <h2>📖 Μαθαίνω!</h2>
+  <p>在iPad/iPhone上使用语音功能，请点击下方按钮激活。</p>
+  <button onclick="initSpeech()">开始学习！▶</button>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="font-size:48px;margin-bottom:8px;">📖</div>
+    <div class="auth-title" id="auth-title">欢迎！</div>
+    <div class="auth-sub" id="auth-sub">登录后可跨设备同步学习进度。</div>
+  </div>
+
+  <div class="auth-error" id="auth-error"></div>
+
+  <input type="email" class="auth-input" id="auth-email" placeholder="电子邮箱" autocomplete="email" autocorrect="off" autocapitalize="none">
+  <input type="password" class="auth-input" id="auth-password" placeholder="密码" autocomplete="current-password" style="display:none;">
+
+  <button class="auth-btn primary" id="auth-btn-primary" onclick="handleAuth()">登录</button>
+  <button class="auth-btn secondary" id="auth-btn-secondary" onclick="toggleAuthMode()" style="display:none;">创建账户</button>
+
+  <div class="auth-toggle" id="auth-toggle">
+    还没有账户？ <a onclick="toggleAuthMode()">创建账户</a>
+  </div>
+
+  <div class="auth-toggle" id="auth-skip" style="margin-top: 24px;">
+    <a onclick="skipAuth()" style="font-weight: 400;">跳过登录（本地模式）</a>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until authenticated) -->
+<div id="app-body" style="display:none;"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script src="words.js"></script>
+<script src="stories.js"></script>
+<script src="vocabulary.js"></script>
+<script>
+
+// ══════════════════════════════════════════════════════
+// 🔥 FIREBASE CONFIG — 替换为你自己的信息
+//    前往： console.firebase.google.com → 项目设置 → Web应用 → 配置
+//    同时启用： 身份验证 → 登录方式 → 邮箱/密码 → 启用
+// ══════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyDmugxUFU_mJT92nufegTeCQDAHqflbrus",
+  authDomain: "diabazo-9f7f2.firebaseapp.com",
+  projectId: "diabazo-9f7f2",
+  storageBucket: "diabazo-9f7f2.firebasestorage.app",
+  messagingSenderId: "428078541210",
+  appId: "1:428078541210:web:58b0ea1be62182f9cb3223"
+};
+// ══════════════════════════════════════════════════════
+
+let db = null;
+let firebaseReady = false;
+let isRegisterMode = false;
+
+// ── CHILD STATE ──
+// childKey is stored under the authenticated user's document
+// but we also keep a local cache for quick access
+let childKey = localStorage.getItem('childKey') || '';
+
+// ── GAME STATE ──
+let learnedState   = JSON.parse(localStorage.getItem('learned')       || '{}');
+let completedSets  = JSON.parse(localStorage.getItem('completedSets') || '{}');
+let completedDates = JSON.parse(localStorage.getItem('completedDates')|| '{}');
+let currentSet  = parseInt(localStorage.getItem('currentSet')  || '0');
+let currentDay  = parseInt(localStorage.getItem('currentDay')  || '0');
+let currentTab  = 'learn';
+let celebPending = false;
+let speechReady  = false;
+
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+// ── AUTH ──
+function showError(msg) {
+  var el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError() {
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function toggleAuthMode() {
+  isRegisterMode = !isRegisterMode;
+  hideError();
+  var passwordInput = document.getElementById('auth-password');
+  if (isRegisterMode) {
+    document.getElementById('auth-title').textContent = '创建账户';
+    document.getElementById('auth-sub').textContent = '输入邮箱和密码。可在所有设备使用相同账号。';
+    document.getElementById('auth-btn-primary').textContent = '注册';
+    document.getElementById('auth-btn-secondary').style.display = 'block';
+    document.getElementById('auth-btn-secondary').textContent = '← 已有账户';
+    document.getElementById('auth-toggle').style.display = 'none';
+    passwordInput.style.display = 'block';
+    passwordInput.setAttribute('autocomplete', 'new-password');
+  } else {
+    document.getElementById('auth-title').textContent = '欢迎！';
+    document.getElementById('auth-sub').textContent = '登录后可跨设备同步学习进度。';
+    document.getElementById('auth-btn-primary').textContent = '登录';
+    document.getElementById('auth-btn-secondary').style.display = 'none';
+    document.getElementById('auth-toggle').style.display = 'block';
+    passwordInput.style.display = 'none';
+    passwordInput.setAttribute('autocomplete', 'current-password');
+  }
+}
+
+function handleAuth() {
+  hideError();
+  var email = document.getElementById('auth-email').value.trim();
+  var password = document.getElementById('auth-password').value;
+
+  if (!email) { showError('请输入邮箱'); return; }
+
+  // First time: we let user try login without password. If it's register mode or if login fails, show password.
+  if (!isRegisterMode && !password) {
+    // Check if password field is hidden — show it
+    document.getElementById('auth-password').style.display = 'block';
+    document.getElementById('auth-password').focus();
+    return;
+  }
+
+  if (!password) { showError('请输入密码'); return; }
+
+  var btn = document.getElementById('auth-btn-primary');
+  btn.disabled = true;
+  btn.textContent = '请稍候...';
+
+  if (isRegisterMode) {
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then(function() { onAuthSuccess(); })
+      .catch(function(err) {
+        btn.disabled = false;
+        btn.textContent = '注册';
+        if (err.code === 'auth/email-already-in-use') {
+          showError('该邮箱已被注册，请前往登录。');
+        } else if (err.code === 'auth/weak-password') {
+          showError('密码至少6个字符.');
+        } else {
+          showError('错误： ' + err.message);
+        }
+      });
+  } else {
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(function() { onAuthSuccess(); })
+      .catch(function(err) {
+        btn.disabled = false;
+        btn.textContent = '登录';
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+          showError('邮箱或密码错误。');
+        } else {
+          showError('错误： ' + err.message);
+        }
+      });
+  }
+}
+
+function skipAuth() {
+  document.getElementById('auth-screen').style.display = 'none';
+  showAppShell();
+  // Local-only mode — no Firebase sync
+  setSyncStatus('off');
+  renderLearn();
+}
+
+function onAuthSuccess() {
+  document.getElementById('auth-screen').style.display = 'none';
+  showAppShell();
+  firebaseReady = true;
+  setSyncStatus('ok');
+  updateAppSub();
+  // Load child list & progress from cloud
+  loadChildList();
+}
+
+function logout() {
+  firebase.auth().signOut().then(function() {
+    firebaseReady = false;
+    childKey = '';
+    // Reset to local-only data
+    learnedState   = JSON.parse(localStorage.getItem('learned')       || '{}');
+    completedSets  = JSON.parse(localStorage.getItem('completedSets') || '{}');
+    completedDates = JSON.parse(localStorage.getItem('completedDates')|| '{}');
+    currentSet = parseInt(localStorage.getItem('currentSet') || '0');
+    currentDay = parseInt(localStorage.getItem('currentDay') || '0');
+    document.getElementById('app-body').innerHTML = '';
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('auth-email').value = '';
+    document.getElementById('auth-password').value = '';
+    document.getElementById('auth-password').style.display = 'none';
+    document.getElementById('auth-btn-primary').disabled = false;
+    document.getElementById('auth-btn-primary').textContent = '登录';
+    if (isRegisterMode) toggleAuthMode();
+  });
+}
+
+// ── FIREBASE INIT ──
+function getUserId() {
+  var user = firebase.auth().currentUser;
+  return user ? user.uid : null;
+}
+
+function getUserDoc() {
+  var uid = getUserId();
+  return uid ? db.collection('users').doc(uid) : null;
+}
+
+function getChildDoc(childName) {
+  var uid = getUserId();
+  if (!uid || !childName) return null;
+  var docId = 'child_' + childName.toLowerCase().replace(/\s+/g, '_');
+  return db.collection('users').doc(uid).collection('children').doc(docId);
+}
+
+function getActiveChildDoc() {
+  return getChildDoc(childKey);
+}
+
+function setSyncStatus(s) {
+  var d = document.getElementById('sync-dot');
+  if (!d) return;
+  d.className = 'sync-dot ' + s;
+}
+
+function updateAppSub() {
+  var el = document.getElementById('app-sub-line');
+  if (!el) return;
+  var dot = '<span class="sync-dot" id="sync-dot" title="同步状态"></span>';
+  if (childKey && firebaseReady) {
+    el.innerHTML = '👧 ' + childKey + ' · ☁️ ' + dot;
+  } else if (childKey) {
+    el.innerHTML = '👧 ' + childKey + ' · 📴 ' + dot;
+  } else {
+    el.innerHTML = '学习希腊语单词 ' + dot;
+  }
+  setSyncStatus(firebaseReady ? 'ok' : 'off');
+}
+
+// ── CLOUD SYNC ──
+function saveToCloud() {
+  if (!firebaseReady || !db || !childKey) return;
+  var doc = getActiveChildDoc();
+  if (!doc) return;
+  setSyncStatus('busy');
+  var data = {
+    childKey:      childKey,
+    learned:       learnedState,
+    completedSets: completedSets,
+    completedDates:completedDates,
+    currentSet:    currentSet,
+    currentDay:    currentDay,
+    updatedAt:     firebase.firestore.FieldValue.serverTimestamp()
+  };
+  doc.set(data, { merge: true }).then(function() {
+    setSyncStatus('ok');
+  }).catch(function(err) {
+    console.log('Save error:', err);
+    setSyncStatus('off');
+  });
+}
+
+function loadFromCloud() {
+  if (!firebaseReady || !db || !childKey) return;
+  var doc = getActiveChildDoc();
+  if (!doc) return;
+  setSyncStatus('busy');
+  doc.get().then(function(snap) {
+    if (snap.exists) {
+      var d = snap.data();
+      var cloudLearned = d.learned || {};
+      var localLearned = learnedState;
+      var mergedLearned = {};
+      var allKeys = new Set();
+      Object.keys(cloudLearned).forEach(function(k){ allKeys.add(k); });
+      Object.keys(localLearned).forEach(function(k){ allKeys.add(k); });
+      allKeys.forEach(function(k) {
+        mergedLearned[k] = !!(cloudLearned[k] || localLearned[k]);
+      });
+
+      var cloudCompleted = d.completedSets || {};
+      var localCompleted = completedSets;
+      var mergedCompleted = {};
+      var allSetKeys = new Set();
+      Object.keys(cloudCompleted).forEach(function(k){ allSetKeys.add(k); });
+      Object.keys(localCompleted).forEach(function(k){ allSetKeys.add(k); });
+      allSetKeys.forEach(function(k) {
+        mergedCompleted[k] = !!(cloudCompleted[k] || localCompleted[k]);
+      });
+
+      var cloudDates  = d.completedDates || {};
+      var localDates  = completedDates;
+      var mergedDates = {};
+      var allDateKeys = new Set();
+      Object.keys(cloudDates).forEach(function(k){ allDateKeys.add(k); });
+      Object.keys(localDates).forEach(function(k){ allDateKeys.add(k); });
+      allDateKeys.forEach(function(k) {
+        var cd = cloudDates[k], ld = localDates[k];
+        if (!cd) mergedDates[k] = ld;
+        else if (!ld) mergedDates[k] = cd;
+        else mergedDates[k] = cd < ld ? cd : ld;
+      });
+
+      var cloudSet = typeof d.currentSet === 'number' ? d.currentSet : 0;
+      var cloudDay = typeof d.currentDay === 'number' ? d.currentDay : 0;
+
+      learnedState   = mergedLearned;
+      completedSets  = mergedCompleted;
+      completedDates = mergedDates;
+      currentSet     = Math.max(currentSet, cloudSet);
+      currentDay     = Math.max(currentDay, cloudDay);
+
+      saveLocal();
+      setSyncStatus('ok');
+    } else {
+      saveToCloud();
+    }
+    renderLearn();
+    updateHeader();
+  }).catch(function(err) {
+    console.log('Load error:', err);
+    setSyncStatus('off');
+  });
+}
+
+// ── CHILD LIST MANAGEMENT ──
+function loadChildList() {
+  var uid = getUserId();
+  if (!uid || !db) return;
+  db.collection('users').doc(uid).collection('children').orderBy('updatedAt','desc').get().then(function(snap) {
+    var children = [];
+    snap.forEach(function(doc) {
+      children.push(doc.data().childKey);
+    });
+    if (children.length === 0) {
+      // No children yet — show child setup directly
+      showChildSetup();
+    } else if (!childKey || children.indexOf(childKey) === -1) {
+      // Show child picker or setup
+      showChildPicker(children);
+    } else {
+      // Already have a child selected — load progress
+      loadFromCloud();
+    }
+  }).catch(function() {
+    // Offline or error — fall back to local child
+    if (!childKey) showChildSetup();
+    else renderLearn();
+  });
+}
+
+function showChildPicker(children) {
+  var html = '<div style="padding:20px;text-align:center;">' +
+    '<div style="font-size:40px;margin-bottom:12px;">👧</div>' +
+    '<div style="font-size:18px;font-weight:700;color:var(--purple-dark);margin-bottom:6px;">选择孩子</div>' +
+    '<div style="font-size:13px;color:var(--text3);margin-bottom:20px;">或添加新孩子</div>';
+
+  children.forEach(function(name) {
+    html += '<div onclick="selectChild(\''+name.replace(/'/g,"\\'")+'\')" style="background:var(--bg2);border:1.5px solid var(--purple-mid);border-radius:14px;padding:14px 18px;margin-bottom:8px;cursor:pointer;text-align:center;font-size:16px;font-weight:600;color:var(--purple-dark);">'+name+'</div>';
+  });
+
+  html += '<div onclick="showChildSetup()" style="background:var(--purple-light);border:1.5px dashed #AFA9EC;border-radius:14px;padding:14px 18px;margin-bottom:8px;cursor:pointer;text-align:center;font-size:16px;font-weight:600;color:var(--purple);">+ 添加孩子</div>';
+  html += '</div>';
+
+  document.getElementById('tab-learn').innerHTML = html;
+  document.getElementById('tab-review').style.display = 'none';
+  document.getElementById('tab-stats').style.display = 'none';
+  document.getElementById('tab-ab').style.display = 'none';
+  document.getElementById('tab-stories').style.display = 'none';
+}
+
+function selectChild(name) {
+  childKey = name;
+  localStorage.setItem('childKey', childKey);
+  updateAppSub();
+  document.getElementById('tab-review').style.display = 'none';
+  document.getElementById('tab-stats').style.display = 'none';
+  document.getElementById('tab-ab').style.display = 'none';
+  document.getElementById('tab-stories').style.display = 'none';
+  loadFromCloud();
+}
+
+function showChildSetup() {
+  var html = '<div style="padding:20px;text-align:center;">' +
+    '<div style="font-size:48px;margin-bottom:12px;">👧</div>' +
+    '<div style="font-size:20px;font-weight:700;color:var(--purple-dark);margin-bottom:6px;">哪个孩子在学？</div>' +
+    '<div style="font-size:13px;color:var(--text3);margin-bottom:22px;">输入孩子名字。<br>以后可以添加更多孩子。</div>' +
+    '<input type="text" id="child-name-input" placeholder="例如：小明" autocomplete="off" autocorrect="off" autocapitalize="words" maxlength="30" style="width:100%;max-width:280px;padding:14px 16px;border-radius:14px;border:1.5px solid var(--border);font-size:16px;text-align:center;font-family:inherit;background:var(--bg2);-webkit-appearance:none;appearance:none;margin-bottom:14px;">' +
+    '<button onclick="saveChildNameFromSetup()" style="background:var(--purple);color:white;border:none;border-radius:14px;padding:15px 36px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;max-width:280px;-webkit-appearance:none;appearance:none;">继续 ▶</button>';
+  html += '</div>';
+  document.getElementById('tab-learn').innerHTML = html;
+  document.getElementById('tab-review').style.display = 'none';
+  document.getElementById('tab-stats').style.display = 'none';
+  document.getElementById('tab-ab').style.display = 'none';
+  document.getElementById('tab-stories').style.display = 'none';
+}
+
+function saveChildNameFromSetup() {
+  var input = document.getElementById('child-name-input');
+  var name = input.value.trim();
+  if (!name) return;
+  childKey = name;
+  localStorage.setItem('childKey', childKey);
+  updateAppSub();
+  document.getElementById('tab-review').style.display = 'none';
+  document.getElementById('tab-stats').style.display = 'none';
+  document.getElementById('tab-ab').style.display = 'none';
+  document.getElementById('tab-stories').style.display = 'none';
+  loadFromCloud();
+}
+
+function changeChildName() {
+  loadChildList();
+}
+
+// ── LOCAL SAVE ──
+function saveLocal() {
+  localStorage.setItem('learned',       JSON.stringify(learnedState));
+  localStorage.setItem('completedSets', JSON.stringify(completedSets));
+  localStorage.setItem('completedDates',JSON.stringify(completedDates));
+  localStorage.setItem('currentSet', currentSet);
+  localStorage.setItem('currentDay', currentDay);
+}
+
+function save() {
+  saveLocal();
+  saveToCloud();
+}
+
+function lKey(s,d){ return 's'+s+'_d'+d; }
+function sKey(s)  { return 'set_'+s; }
+
+function isAudioUnlocked(i){
+  return true; // CN version: audio always available
+}
+function daysLeft(i){
+  return 0; // CN version: no lock period
+}
+function totalLearned()  { return Object.values(learnedState).filter(Boolean).length; }
+function totalCompleted(){ return Object.values(completedSets).filter(Boolean).length; }
+
+// ── SPEECH ──
+function initSpeech(){
+  document.getElementById('speech-init').style.display = 'none';
+  speechReady = true;
+  var u = new SpeechSynthesisUtterance(' ');
+  u.volume = 0; u.lang = 'el-GR';
+  window.speechSynthesis.speak(u);
+}
+function speak(text){
+  if(!window.speechSynthesis) return;
+  if(isIOS && !speechReady){ showSpeechInit(); return; }
+  var clean = text.replace(/-/g,'');
+  var u = new SpeechSynthesisUtterance(clean);
+  u.lang = 'el-GR'; u.rate = 0.75;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+function speakSylsArr(syls){
+  if(!window.speechSynthesis) return;
+  if(isIOS && !speechReady){ showSpeechInit(); return; }
+  window.speechSynthesis.cancel();
+  var i = 0;
+  function next(){
+    if(i >= syls.length) return;
+    var u = new SpeechSynthesisUtterance(syls[i]);
+    u.lang = 'el-GR'; u.rate = 0.55;
+    u.onend  = function(){ i++; setTimeout(next, 380); };
+    u.onerror= function(){ i++; setTimeout(next, 380); };
+    window.speechSynthesis.speak(u);
+  }
+  next();
+}
+function showSpeechInit(){
+  document.getElementById('speech-init').style.display = 'flex';
+}
+
+// ── APP SHELL (build the main UI dynamically after auth) ──
+function showAppShell() {
+  var app = document.getElementById('app-body');
+  app.style.display = '';
+  app.innerHTML =
+    '<header>' +
+      '<div class="header-left">' +
+        '<div style="line-height:1.3;">' +
+          '<div class="app-title">📖 Μαθαίνω!</div>' +
+          '<div class="app-sub" id="app-sub-line">学习希腊语单词 <span class="sync-dot" id="sync-dot" title="同步状态"></span></div>' +
+        '</div>' +
+        '<button class="logout-btn" id="logout-btn" style="display:none;" onclick="logout()">🚪 退出</button>' +
+      '</div>' +
+      '<div class="header-stats" id="header-stats"></div>' +
+    '</header>' +
+    '<div class="tabs">' +
+      '<div class="tab active" id="tab-btn-learn" onclick="switchTab(\'learn\',this)">📚 学习</div>' +
+      '<div class="tab" id="tab-btn-review" onclick="switchTab(\'review\',this)">🔄 复习</div>' +
+      '<div class="tab" id="tab-btn-stats" onclick="switchTab(\'stats\',this)">⭐ 进度</div>' +
+      '<div class="tab" id="tab-btn-ab" onclick="switchTab(\'ab\',this)">🔤 ΑΒ</div>' +
+      '<div class="tab" id="tab-btn-stories" onclick="switchTab(\'stories\',this)">📖 故事</div>' +
+    '</div>' +
+    '<main>' +
+      '<div id="tab-learn"></div>' +
+      '<div id="tab-review" style="display:none;"></div>' +
+      '<div id="tab-stats" style="display:none;"></div>' +
+      '<div id="tab-ab" style="display:none;"></div>' +
+      '<div id="tab-stories" style="display:none;"></div>' +
+    '</main>';
+
+  // Show logout button if authenticated
+  var user = firebase.auth().currentUser;
+  if (user) {
+    document.getElementById('logout-btn').style.display = '';
+    var emailEl = document.getElementById('app-sub-line');
+    if (emailEl && !childKey) {
+      emailEl.innerHTML = user.email + ' <span class="sync-dot" id="sync-dot" title="同步状态"></span>';
+    }
+  }
+  updateAppSub();
+}
+
+// ── TABS ──
+function switchTab(name, el){
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('tab-learn').style.display  = name==='learn'  ? '' : 'none';
+  document.getElementById('tab-review').style.display = name==='review' ? '' : 'none';
+  document.getElementById('tab-stats').style.display  = name==='stats'  ? '' : 'none';
+  document.getElementById('tab-ab').style.display     = name==='ab'     ? '' : 'none';
+  document.getElementById('tab-stories').style.display = name==='stories' ? '' : 'none';
+  currentTab = name;
+  if(name==='review') renderReview();
+  if(name==='stats')  renderStats();
+  if(name==='ab')     renderAbTab();
+  if(name==='stories') renderStories();
+}
+
+// ── LEARN ──
+function speakFullWord(setIdx,dayIdx){
+  if(!window.speechSynthesis) return;
+  var syls=WORD_SETS[setIdx].words[dayIdx].s;
+  var text=syls.join(""); // lowercase WITH tones
+  window.speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(text);
+  u.lang="el-GR";u.rate=0.75;
+  window.speechSynthesis.speak(u);
+}
+
+function renderLearn(){
+  var learnEl = document.getElementById('tab-learn');
+  if (!WORD_SETS || WORD_SETS.length === 0) {
+    learnEl.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text3);">加载中...</div>';
+    return;
+  }
+  var set     = WORD_SETS[currentSet];
+  var wordObj = set.words[currentDay];
+  var lk      = lKey(currentSet, currentDay);
+  var learned = !!learnedState[lk];
+  var audioOk = isAudioUnlocked(currentSet);
+  var setDone = !!completedSets[sKey(currentSet)];
+  var lCount  = set.words.filter(function(_,i){ return learnedState[lKey(currentSet,i)]; }).length;
+  var pct     = Math.round(lCount/10*100);
+  var colors  = ['#534AB7','#D85A30','#0F6E56','#993C1D','#185FA5','#639922'];
+  var syls    = wordObj.s;
+  var sylsJSON = JSON.stringify(syls);
+
+  var html = '';
+
+  if(celebPending){
+    html += '<div class="celebration">' +
+      '<div class="celeb-star">🌟</div>' +
+      '<div class="celeb-title">太棒了！完成了第'+(currentSet+1)+'单元！</div>' +
+      '<div class="celeb-sub">学会了 '+set.words.length+' 个新单词！</div>' +
+      '<div class="celeb-note">🔒 <strong>'+daysLeft(currentSet)+' 天后</strong>解锁带发音的音节。<br>在那之前，请自己练习朗读！</div>' +
+      '<button class="celeb-btn" onclick="nextSetAuto()">下一单元 ▶</button>' +
+      '</div>';
+  }
+
+  html += '<div class="set-nav">' +
+    '<button class="nav-btn" onclick="prevSet()" '+(currentSet===0?'disabled':'')+'>◀</button>' +
+    '<div class="set-info">' +
+      '<div class="set-title">'+set.title+'</div>' +
+      '<div class="set-sub">单元'+(currentSet+1)+' / '+WORD_SETS.length+
+        (setDone ? (audioOk ? ' · 🔊 语音已开启' : ' · 🔒 '+daysLeft(currentSet)+'天后解锁语音') : '') +
+      '</div>' +
+    '</div>' +
+    '<button class="nav-btn" onclick="nextSet()" '+(currentSet===WORD_SETS.length-1?'disabled':'')+'>▶</button>' +
+  '</div>';
+
+  html += '<div class="chips">';
+  set.words.forEach(function(_,i){
+    var dk = lKey(currentSet,i);
+    var isDone = !!learnedState[dk];
+    html += '<div class="chip'+(i===currentDay?' active':'')+(isDone?' done':'')+'" onclick="selDay('+i+')">Λ'+(i+1)+'</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="progress-row">' +
+    '<span class="progress-label">进度：</span>' +
+    '<div class="progress-track"><div class="progress-fill" style="width:'+pct+'%"></div></div>' +
+    '<span class="progress-count">'+lCount+'/10</span>' +
+  '</div>';
+
+  var sylsHTML = '';
+  var sylsLowerHTML = '';
+  syls.forEach(function(s,i){
+    if(s === ' ' || s === ' '){
+      sylsHTML += '<span class="word-gap"></span>';
+      sylsLowerHTML += '<span class="word-gap-lower"></span>';
+      return;
+    }
+    var col = learned ? '#3B6D11' : colors[i % colors.length];
+    var upperSyl = s.toUpperCase().replace(/[ΆΈΉΊΌΎΏ]/g,function(c){ return {Ά:'Α',Έ:'Ε',Ή:'Η',Ί:'Ι',Ό:'Ο',Ύ:'Υ',Ώ:'Ω'}[c]; });
+    sylsHTML += '<span class="syl" style="color:'+col+';">'+upperSyl+'</span>';
+
+    var lowerSyl = s;
+    if(i === syls.length-1 && lowerSyl.slice(-1) === 'σ'){
+      lowerSyl = lowerSyl.slice(0,-1) + 'ς';
+    }
+    sylsLowerHTML += '<span class="syl-lower" style="color:'+col+';">'+lowerSyl+'</span>';
+
+    var nextSyl = (i+1 < syls.length) ? syls[i+1] : null;
+    if(i < syls.length-1 && nextSyl !== ' ' && nextSyl !== ' '){
+      sylsHTML += '<span class="syl-sep">-</span>';
+      sylsLowerHTML += '<span class="syl-sep-lower">-</span>';
+    }
+  });
+
+  html += '<div class="word-card'+(learned?' learned':'')+'" onclick="toggleLearned()">' +
+    '<div class="syllables-display">'+sylsHTML+'</div>' +
+    '<div class="syllables-display-lower">'+sylsLowerHTML+'</div>' +
+    '<div class="card-hint">'+(learned ? '✓ 已学会！' : '学会后点击这里')+'</div>' +
+  '</div>';
+
+  if(audioOk){
+    html += '<div class="audio-grid">' +
+      '<button class="audio-btn" onclick="speakFullWord('+currentSet+','+currentDay+')">🔊 单词</button>' +
+    '</div>';
+  } else if(setDone){
+    html += '<div class="lock-notice">' +
+      '<div class="lock-title">🔒 '+daysLeft(currentSet)+'天后解锁语音</div>' +
+      '<div class="lock-sub">先自己读，再听发音！</div>' +
+    '</div>';
+  }
+
+  html += '<div class="word-nav">' +
+    '<button onclick="prevDay()" '+(currentDay===0?'disabled':'')+'>◀ 上一步</button>' +
+    '<button onclick="nextDay()" '+(currentDay===9?'disabled':'')+'>下一步 ▶</button>' +
+  '</div>';
+
+  learnEl.innerHTML = html;
+  updateHeader();
+}
+
+function toggleLearned(){
+  var k = lKey(currentSet, currentDay);
+  learnedState[k] = !learnedState[k];
+  save();
+  var set = WORD_SETS[currentSet];
+  var allDone = set.words.every(function(_,i){ return learnedState[lKey(currentSet,i)]; });
+  if(allDone && !completedSets[sKey(currentSet)]){
+    completedSets[sKey(currentSet)]  = true;
+    completedDates[sKey(currentSet)] = new Date().toISOString();
+    save();
+    celebPending = true;
+  }
+  renderLearn();
+}
+
+function selDay(i)  { currentDay=i; celebPending=false; save(); renderLearn(); }
+function prevDay()  { if(currentDay>0){ currentDay--; save(); renderLearn(); } }
+function nextDay()  { if(currentDay<9){ currentDay++; save(); renderLearn(); } }
+function prevSet()  { if(currentSet>0){ currentSet--; currentDay=0; celebPending=false; save(); renderLearn(); } }
+function nextSet()  { if(currentSet<WORD_SETS.length-1){ currentSet++; currentDay=0; celebPending=false; save(); renderLearn(); } }
+function nextSetAuto(){ celebPending=false; if(currentSet<WORD_SETS.length-1){ currentSet++; currentDay=0; save(); } renderLearn(); }
+
+// ── REVIEW ──
+function renderReview(){
+  var any = false;
+  var html = '';
+  WORD_SETS.forEach(function(set,i){ if(completedSets[sKey(i)]) any=true; });
+  if(!any){
+    html = '<div style="text-align:center;padding:3rem 1rem;color:var(--text3);font-size:15px;">完成第一个单元后将显示进度！</div>';
+  } else {
+    html = '<p style="font-size:13px;color:var(--text3);margin-bottom:12px;">已完成的单元 — 点击可复习：</p><div class="review-grid">';
+    WORD_SETS.forEach(function(set,i){
+      if(!completedSets[sKey(i)]) return;
+      var aok = isAudioUnlocked(i);
+      html += '<div class="review-set completed" onclick="goReview('+i+')">' +
+        '<div class="review-set-title">'+set.title+'</div>' +
+        '<div class="review-set-meta">单元'+(i+1)+' · '+(aok?'🔊 语音已开启':'🔒 '+daysLeft(i)+'天后解锁语音')+'</div>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+  document.getElementById('tab-review').innerHTML = html;
+}
+function goReview(i){
+  currentSet=i; currentDay=0; celebPending=false; save();
+  switchTab('learn', document.getElementById('tab-btn-learn'));
+  renderLearn();
+}
+
+// ── STATS ──
+function renderStats(){
+  var tl  = totalLearned();
+  var ts  = totalCompleted();
+  var pct = Math.round(tl / (WORD_SETS.length*10) * 100);
+
+  var user = firebase.auth().currentUser;
+  var headerHTML = '';
+  if (user && firebaseReady) {
+    headerHTML = '<div style="text-align:center;margin-bottom:16px;">' +
+      '<div style="font-size:14px;color:var(--text2);margin-bottom:4px;">👤 ' + user.email + ' (συνδεδεμένος)</div>';
+    if (childKey) {
+      headerHTML += '<div style="font-size:16px;font-weight:700;color:var(--purple-dark);margin-bottom:4px;">👧 ' + childKey + '</div>' +
+        '<button onclick="changeChildName()" style="background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit;">✏️ 更换孩子</button>';
+    }
+    headerHTML += '</div>';
+  } else {
+    headerHTML = '<div style="text-align:center;margin-bottom:16px;">' +
+      '<button onclick="showChildSetup()" style="background:var(--purple-light);border:1px solid #AFA9EC;border-radius:20px;padding:8px 18px;font-size:13px;color:var(--purple-dark);cursor:pointer;font-family:inherit;font-weight:600;margin-bottom:10px;">👧 孩子设置</button>' +
+      '</div>';
+  }
+
+  document.getElementById('tab-stats').innerHTML = headerHTML +
+    '<div class="streak-card"><div class="streak-num">⭐ '+ts+'</div><div class="streak-label">已完成的单元</div></div>' +
+    '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="stat-num">'+tl+'</div><div class="stat-label">已学单词</div></div>' +
+      '<div class="stat-card"><div class="stat-num">'+(WORD_SETS.length*10-tl)+'</div><div class="stat-label">剩余单词</div></div>' +
+      '<div class="stat-card"><div class="stat-num">'+pct+'%</div><div class="stat-label">总体进度</div></div>' +
+      '<div class="stat-card"><div class="stat-num">'+WORD_SETS.length+'</div><div class="stat-label">单元总数</div></div>' +
+    '</div>' +
+    '<div style="background:var(--bg2);border-radius:var(--radius);padding:16px;border:1px solid var(--border);">' +
+      '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">总体进度</div>' +
+      '<div style="height:10px;background:#e0e0e0;border-radius:99px;overflow:hidden;margin-bottom:8px;">' +
+        '<div style="height:100%;width:'+pct+'%;background:var(--purple-mid);border-radius:99px;"></div>' +
+      '</div>' +
+      '<div style="font-size:13px;color:var(--text3);">'+tl+' από '+(WORD_SETS.length*10)+' 个单词（'+pct+'%)</div>' +
+    '</div>';
+}
+
+function updateHeader(){
+  document.getElementById('header-stats').innerHTML = '⭐ '+totalCompleted()+' 单元<br>'+totalLearned()+' 单词';
+}
+
+// ── ALPHABET & GRAMMAR DATA ──
+const ALPHABET = [
+  {upper:'Α',lower:'α',name:'άλφα',say:'άλφα'},{upper:'Β',lower:'β',name:'βήτα',say:'βήτα'},
+  {upper:'Γ',lower:'γ',name:'γάμα',say:'γάμα'},{upper:'Δ',lower:'δ',name:'δέλτα',say:'δέλτα'},
+  {upper:'Ε',lower:'ε',name:'έψιλον',say:'έψιλον'},{upper:'Ζ',lower:'ζ',name:'ζήτα',say:'ζήτα'},
+  {upper:'Η',lower:'η',name:'ήτα',say:'ήτα'},{upper:'Θ',lower:'θ',name:'θήτα',say:'θήτα'},
+  {upper:'Ι',lower:'ι',name:'γιώτα',say:'γιώτα'},{upper:'Κ',lower:'κ',name:'κάπα',say:'κάπα'},
+  {upper:'Λ',lower:'λ',name:'λάμδα',say:'λάμδα'},{upper:'Μ',lower:'μ',name:'μι',say:'μι'},
+  {upper:'Ν',lower:'ν',name:'νι',say:'νι'},{upper:'Ξ',lower:'ξ',name:'ξι',say:'ξι'},
+  {upper:'Ο',lower:'ο',name:'όμικρον',say:'όμικρον'},{upper:'Π',lower:'π',name:'πι',say:'πι'},
+  {upper:'Ρ',lower:'ρ',name:'ρο',say:'ρο'},{upper:'Σ',lower:'σ/ς',name:'σίγμα',say:'σίγμα'},
+  {upper:'Τ',lower:'τ',name:'ταυ',say:'ταυ'},{upper:'Υ',lower:'υ',name:'ύψιλον',say:'ύψιλον'},
+  {upper:'Φ',lower:'φ',name:'φι',say:'φι'},{upper:'Χ',lower:'χ',name:'χι',say:'χι'},
+  {upper:'Ψ',lower:'ψ',name:'ψι',say:'πσι'},{upper:'Ω',lower:'ω',name:'ωμέγα',say:'ωμέγα'}
+];
+
+const VOWEL_COMBOS = [
+  {upper:'ΑΙ',lower:'αι',sound:'读作「e」',example:'καιρός → 读作 κερός',say:'αι προφέρεται ε'},
+  {upper:'ΕΙ',lower:'ει',sound:'读作「i」',example:'είναι → 读作 ίνε',say:'ει προφέρεται ι'},
+  {upper:'ΟΙ',lower:'οι',sound:'读作「i」',example:'οικογένεια → 读作 ικογένεια',say:'οι προφέρεται ι'},
+  {upper:'ΥΙ',lower:'υι',sound:'读作「i」',example:'υιός → 读作 ιός',say:'υι προφέρεται ι'},
+  {upper:'ΑΥ',lower:'αυ',sound:'读作「av」或「af」',example:'αύριο → 读作 άβριο | αυτός → 读作 αφτός',say:'αυ προφέρεται αβ ή αφ'},
+  {upper:'ΕΥ',lower:'ευ',sound:'读作「ev」或「ef」',example:'Ευρώπη → 读作 εβρώπη | ευχαριστώ → 读作 εφχαριστώ',say:'ευ προφέρεται εβ ή εφ'},
+  {upper:'ΟΥ',lower:'ου',sound:'读作「u」',example:'λουλούδι → 读音不变',say:'ου προφέρεται ου'},
+  {upper:'ΗΥ',lower:'ηυ',sound:'读作「iv」或「if」',example:'διηύθυνε → 读作 διίφθινε',say:'ηυ προφέρεται ιβ ή ιφ'}
+];
+
+const DIGRAPHS = [
+  {upper:'ΜΠ',lower:'μπ',sound:'读作「b」',example:'μπαμπάς, καμπάνα',say:'μπα'},
+  {upper:'ΝΤ',lower:'ντ',sound:'读作「d」',example:'ντομάτα, πέντε',say:'ντο'},
+  {upper:'ΓΚ',lower:'γκ',sound:'读作「g」',example:'γκάζι, αγκαλιά',say:'γκα'},
+  {upper:'ΓΓ',lower:'γγ',sound:'读作「ng」',example:'άγγελος → άνγκελος',say:'νγκα'},
+  {upper:'ΤΣ',lower:'τσ',sound:'读作「ts」',example:'τσάντα, έτσι',say:'τσα'},
+  {upper:'ΤΖ',lower:'τζ',sound:'读作「dz」',example:'τζάμι, τζιτζικας',say:'τζα'}
+];
+
+const GRAMMAR_RULES = [
+  {
+    title:'什么是重音符？',
+    text:'重音符（´）是一个标在元音上的小符号，它告诉我们哪个音节要读得重一些。所有超过一个音节的单词都有重音符。',
+    examples:['μα<strong>μά</strong>','<strong>σπί</strong>τι','κα<strong>λη</strong>μέρα'],
+    say:'Ο τόνος είναι ένα μικρό σημαδάκι που μπαίνει πάνω από ένα φωνήεν. Μας λέει ποια συλλαβή να πούμε πιο δυνατά. Όλες οι λέξεις με πάνω από μία συλλαβή έχουν τόνο. 例： μαμά（妈妈）、σπίτι（家）、καλημέρα（早上好）。'
+  },
+  {
+    title:'元音（7个）',
+    text:'元音是可以不用闭口就能发出的字母。希腊语有7个元音，每个音节至少有一个元音。',
+    examples:['<strong>α</strong>-γά-πη','<strong>ε</strong>-<strong>ι</strong>-ρή-νη'],
+    say:'Τα φωνήεντα είναι γράμματα που τα λέμε με τη φωνή μας χωρίς να κλείνει το στόμα. Είναι 7: άλφα, έψιλον, ήτα, γιώτα, όμικρον, ύψιλον, ωμέγα. 每个音节至少有一个元音。'
+  },
+  {
+    title:'辅音（17个）',
+    text:'辅音是除元音外的所有字母，需要元音的帮助才能发音。希腊语有17个辅音。',
+    examples:['<strong>β</strong>ή-τα','<strong>λ</strong>ά-μδα'],
+    say:'Τα σύμφωνα είναι όλα τα υπόλοιπα γράμματα. Για να τα πούμε χρειαζόμαστε βοήθεια από ένα φωνήεν. Είναι 17: βήτα, γάμα, δέλτα, ζήτα, θήτα, κάπα, λάμδα, μι, νι, ξι, πι, ρο, σίγμα, ταυ, φι, χι, ψι.'
+  },
+  {
+    title:'词尾的ς',
+    text:'词尾的<span class="ab-grammar-highlight">σ</span>要写成<span class="ab-grammar-highlight">ς</span>，例如：ο φίλος，不是 ο φίλοσ。词首或词中用σ。',
+    examples:['<strong>σ</strong>κύλο<strong>ς</strong>','φίλο<strong>ς</strong>'],
+    say:'Το σίγμα στο τέλος μιας λέξης γράφεται σίγμα τελικό. 例：「ο φίλος」而非「ο φίλοσ」。'
+  },
+  {
+    title:'两个连在一起的元音',
+    text:'两个元音连在一起时常常发一个音。例如：αι读作ε，ει和οι读作ι。见上方双元音部分。',
+    examples:['κ<strong>αι</strong> → κε','<strong>ει</strong>ρήνη → ιρήνη'],
+    say:'Όταν δύο φωνήεντα είναι μαζί, συχνά προφέρονται σαν ένα. Για παράδειγμα: το άλφα γιώτα προφέρεται ε, το έψιλον γιώτα και το όμικρον γιώτα προφέρονται ι. Δες παραπάνω στην ενότητα Δίψηφα Φωνήεντα.'
+  },
+  {
+    title:'两个连在一起的辅音',
+    text:'有些辅音组合在一起会形成新的发音。例如：μπ读作b，ντ读作d。见上方双辅音部分。',
+    examples:['<strong>μπ</strong>αμπάς','<strong>ντ</strong>ομάτα'],
+    say:'Μερικά σύμφωνα όταν είναι μαζί φτιάχνουν έναν καινούριο ήχο. Για παράδειγμα: το μι πι ακούγεται σαν μπα, το νι ταυ σαν ντα. Δες παραπάνω στην ενότητα Δίψηφα Σύμφωνα.'
+  },
+  {
+    title:'什么是音节？',
+    text:'单词可以拆分成小块，称为音节。每个音节至少有一个元音。我们可以拍手来数音节！👏',
+    examples:['<strong>κα</strong>-<strong>λη</strong>-<strong>μέ</strong>-<strong>ρα</strong> (4 👏)','<strong>σπί</strong>-<strong>τι</strong> (2 👏)'],
+    say:'Η λέξη χωρίζεται σε μικρά κομμάτια που τα λέμε συλλαβές. Κάθε συλλαβή έχει τουλάχιστον ένα φωνήεν. Χτυπάμε παλαμάκια για να τις μετρήσουμε. Για παράδειγμα: καλημέρα έχει τέσσερις συλλαβές. Σπίτι έχει δύο συλλαβές.'
+  }
+];
+
+// ── RENDER AB TAB ──
+function renderAbTab() {
+  var html = '';
+
+  // Section 1: Alphabet
+  html += '<div class="ab-section">';
+  html += '<div class="ab-section-title">🔤 希腊字母表（24个字母）</div>';
+  html += '<div class="ab-letter-grid">';
+  ALPHABET.forEach(function(l) {
+    html += '<div class="ab-letter-card" onclick="speakLetter(\''+l.say.replace(/'/g,"\\'")+'\')">';
+    html += '<div class="ab-letter-upper">'+l.upper+'</div>';
+    html += '<div class="ab-letter-lower">'+l.lower+'</div>';
+    html += '<div class="ab-letter-name">'+l.name+'</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  // Section 2: Vowel Combinations
+  html += '<div class="ab-section">';
+  html += '<div class="ab-section-title">🔊 双元音 — 发音规则</div>';
+  VOWEL_COMBOS.forEach(function(v) {
+    html += '<div class="ab-digraph-row" onclick="speakLetter(\''+v.say.replace(/'/g,"\\'")+'\')">';
+    html += '<div><div class="ab-digraph-letters">'+v.upper+'</div><div class="ab-digraph-lower">'+v.lower+'</div></div>';
+    html += '<div style="flex:1;"><div class="ab-digraph-sound">'+v.sound+'</div><div class="ab-digraph-example">'+v.example+'</div></div>';
+    html += '<button class="ab-speak-btn" onclick="event.stopPropagation();speakLetter(\''+v.say.replace(/'/g,"\\'")+'\')">🔊</button>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Section 3: Consonant Digraphs
+  html += '<div class="ab-section">';
+  html += '<div class="ab-section-title">🔊 双辅音 — 发音规则</div>';
+  DIGRAPHS.forEach(function(d) {
+    html += '<div class="ab-digraph-row" onclick="speakLetter(\''+d.say.replace(/'/g,"\\'")+'\')">';
+    html += '<div><div class="ab-digraph-letters">'+d.upper+'</div><div class="ab-digraph-lower">'+d.lower+'</div></div>';
+    html += '<div style="flex:1;"><div class="ab-digraph-sound">'+d.sound+'</div><div class="ab-digraph-example">'+d.example+'</div></div>';
+    html += '<button class="ab-speak-btn" onclick="event.stopPropagation();speakLetter(\''+d.say.replace(/'/g,"\\'")+'\')">🔊</button>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Section 4: Grammar
+  html += '<div class="ab-section">';
+  html += '<div class="ab-section-title">📖 简单语法</div>';
+  GRAMMAR_RULES.forEach(function(g) {
+    html += '<div class="ab-grammar-card" onclick="speakLetter(\''+g.say.replace(/'/g,"\\'")+'\')">';
+    html += '<div class="ab-grammar-title">🔊 '+g.title+'</div>';
+    html += '<div class="ab-grammar-text">'+g.text+'</div>';
+    if (g.examples && g.examples.length > 0) {
+      html += '<div style="margin-top:8px;">';
+      g.examples.forEach(function(ex) {
+        html += '<span class="ab-grammar-example">'+ex+'</span> ';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Bottom spacer for comfortable scrolling
+  html += '<div style="height:60px;"></div>';
+
+  document.getElementById('tab-ab').innerHTML = html;
+}
+
+function speakLetter(text) {
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  setTimeout(function() {
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'el-GR'; u.rate = 1.0;
+    window.speechSynthesis.speak(u);
+  }, 120);
+}
+
+// ── STORIES ──
+var currentStoryId = 0;
+
+function renderStories() {
+  var html = '<div class="ab-section-title">📖 选择一个故事</div>';
+  html += '<p style="font-size:13px;color:var(--text3);margin-bottom:14px;">点击选择一个故事，然后点击单词可听发音 🔊</p>';
+
+  STORIES.forEach(function(s) {
+    var preview = s.text.length > 60 ? s.text.substring(0,60) + '...' : s.text;
+    html += '<div class="story-card" onclick="openStory('+s.id+')">';
+    html += '<div class="story-card-id">故事 '+s.id+'</div>';
+    html += '<div class="story-card-title">'+s.title+'</div>';
+    html += '<div class="story-card-preview">'+preview+'</div>';
+    html += '</div>';
+  });
+
+  html += '<div style="height:60px;"></div>';
+  document.getElementById('tab-stories').innerHTML = html;
+}
+
+function openStory(id) {
+  currentStoryId = id;
+  var story = STORIES.find(function(s) { return s.id === id; });
+  if (!story) return;
+
+  // Build clickable word view
+  var wordsHTML = '';
+  // Split text into words + punctuation tokens
+  var tokens = story.text.match(/[Α-Ωα-ωΆΈΉΊΌΎΏάέήίόύώΐΰϊϋ]+|[^Α-Ωα-ωΆΈΉΊΌΎΏάέήίόύώΐΰϊϋ]+/g) || [];
+  tokens.forEach(function(token) {
+    // Check if it's a word (contains Greek letters)
+    if (/[Α-Ωα-ωΆΈΉΊΌΎΏάέήίόύώΐΰϊϋ]/.test(token)) {
+      var word = token;
+      var cleanWord = word.replace(/[.,!?;:'"«»()\[\]]/g, '');
+      wordsHTML += '<span class="story-word" onclick="speakWord(event, \''+cleanWord.replace(/'/g,"\\'")+'\')">'+word+'</span>';
+    } else {
+      wordsHTML += '<span class="story-punct">'+token+'</span>';
+    }
+  });
+
+  var html = '<button class="story-back-btn" onclick="renderStories()">← 返回故事列表</button>';
+  html += '<div class="story-detail-title">'+story.title+'</div>';
+  html += '<div class="story-text">'+wordsHTML+'</div>';
+  html += '<button class="story-speak-all-btn" onclick="speakStory('+id+')">🔊 朗读整个故事</button>';
+  html += '<div style="height:40px;"></div>';
+
+  document.getElementById('tab-stories').innerHTML = html;
+}
+
+function speakWord(event, word) {
+  // Stop click from propagating to parent
+  if (event) event.stopPropagation();
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  setTimeout(function() {
+    var u = new SpeechSynthesisUtterance(word);
+    u.lang = 'el-GR'; u.rate = 0.55;
+    window.speechSynthesis.speak(u);
+  }, 50);
+}
+
+function speakStory(id) {
+  if (!window.speechSynthesis) return;
+  var story = STORIES.find(function(s) { return s.id === id; });
+  if (!story) return;
+  window.speechSynthesis.cancel();
+  // Split into sentences for natural pauses
+  var sentences = story.text.split(/(?<=[.!?])\s+/);
+  var i = 0;
+  function next() {
+    if (i >= sentences.length) return;
+    var u = new SpeechSynthesisUtterance(sentences[i]);
+    u.lang = 'el-GR'; u.rate = 0.7;
+    u.onend = function() { i++; setTimeout(next, 400); };
+    u.onerror = function() { i++; setTimeout(next, 400); };
+    window.speechSynthesis.speak(u);
+  }
+  next();
+}
+
+// ── INIT ──
+// Initialize Firebase
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  db.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
+    if (err.code === 'failed-precondition') {
+      console.log('Multiple tabs — persistence in one only');
+    }
+  });
+
+  // Listen for auth state changes
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      // User is signed in — already handled by onAuthSuccess()
+      // But if this is a page reload with a persisted session, init the app
+      var authScreen = document.getElementById('auth-screen');
+      if (authScreen.style.display !== 'none' || !document.getElementById('logout-btn') || document.getElementById('logout-btn').style.display === 'none') {
+        document.getElementById('auth-screen').style.display = 'none';
+        if (document.getElementById('app-body').innerHTML === '') showAppShell();
+        firebaseReady = true;
+        setSyncStatus('ok');
+        updateAppSub();
+        document.getElementById('logout-btn').style.display = '';
+        loadChildList();
+      }
+    }
+  });
+} catch(e) {
+  console.log('Firebase not available');
+}
+
+// Show iOS speech init
+if(isIOS && !localStorage.getItem('speechInitDone')){
+  setTimeout(function(){ document.getElementById('speech-init').style.display='flex'; }, 800);
+}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+
+var _initSpeech = initSpeech;
+initSpeech = function(){
+  _initSpeech();
+  localStorage.setItem('speechInitDone','1');
+};
+if(localStorage.getItem('speechInitDone')) speechReady = true;
+
+// Allow Enter key on password field
+document.getElementById('auth-password').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') handleAuth();
+});
+document.getElementById('auth-email').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') handleAuth();
+});
+</script>
+</body>
+</html>
