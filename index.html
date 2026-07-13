@@ -1414,8 +1414,12 @@ function renderAbTab() {
   html += '<div class="ab-section">';
   html += '<div class="ab-section-title">📖 简单语法</div>';
   GRAMMAR_RULES.forEach(function(g) {
-    var plainText = g.text.replace(/<[^>]*>/g,'');
-    html += '<div class="ab-grammar-card" onclick="speakChinese(\''+plainText.replace(/'/g,"\\'")+'\')">';
+    var plainText = g.text.replace(/<[^>]*>/g,'').replace(/'/g,"\\'");
+    var allExamplesPlain = (g.examples || []).map(function(ex){ return ex.replace(/<[^>]*>/g,''); }).join(' ');
+    var greekWords = extractGreekWords(allExamplesPlain);
+    var greekArrLit = "['" + greekWords.map(function(w){ return w.replace(/'/g,"\\'"); }).join("','") + "']";
+    var onclickCall = "speakMixed('"+plainText+"', "+greekArrLit+")";
+    html += '<div class="ab-grammar-card" onclick="'+onclickCall+'">';
     html += '<div class="ab-grammar-title">🔊 '+g.title+'</div>';
     html += '<div class="ab-grammar-text">'+g.text+'</div>';
     if (g.examples && g.examples.length > 0) {
