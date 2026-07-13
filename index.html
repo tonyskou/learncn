@@ -517,6 +517,23 @@
   <button class="auth-btn primary" id="auth-btn-primary" onclick="handleAuth()">登录</button>
   <button class="auth-btn secondary" id="auth-btn-secondary" onclick="toggleAuthMode()" style="display:none;">创建账户</button>
 
+  <div style="display:flex;align-items:center;gap:10px;margin:18px 0;">
+    <div style="flex:1;height:1px;background:var(--border);"></div>
+    <div style="font-size:12px;color:var(--text3);">或</div>
+    <div style="flex:1;height:1px;background:var(--border);"></div>
+  </div>
+
+  <button class="auth-btn secondary" id="auth-btn-google" onclick="signInWithGoogle()" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;">
+    <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+    使用 Google 登录
+  </button>
+
+  <!-- Apple 登录已就绪，暂时隐藏 — 设置好 Apple Developer 账号后，把下面的 display:none 删掉即可启用 -->
+  <button class="auth-btn secondary" id="auth-btn-apple" onclick="signInWithApple()" style="display:none;align-items:center;justify-content:center;gap:10px;">
+    <svg width="16" height="18" viewBox="0 0 16 18" fill="#000"><path d="M13.2 9.5c0-2 1.6-3 1.7-3.1-1-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.7-.7-1.4 0-2.7.8-3.4 2-1.5 2.5-.4 6.3 1 8.3.7 1 1.5 2.1 2.6 2 1-.1 1.4-.6 2.7-.6s1.6.6 2.7.6c1.1 0 1.9-1 2.6-2 .6-.9.9-1.7.9-1.8 0-.1-1.7-.6-1.7-2.8zM10.8 3.2c.6-.7 1-1.7.9-2.7-.8 0-1.9.5-2.5 1.2-.6.6-1.1 1.7-.9 2.6.9.1 1.9-.4 2.5-1.1z"/></svg>
+    使用 Apple 登录
+  </button>
+
   <div class="auth-toggle" id="auth-toggle">
     还没有账户？ <a onclick="toggleAuthMode()">创建账户</a>
   </div>
@@ -541,16 +558,18 @@
 
 // ══════════════════════════════════════════════════════
 // 🔥 FIREBASE CONFIG — 替换为你自己的信息
-//    前往： console.firebase.google.com → 项目设置 → Web应用 → 配置
+//    这必须是一个独立的 Firebase 项目（与希腊语版本不同）
+//    前往： console.firebase.google.com → 新建项目 → Web应用 → 配置
 //    同时启用： 身份验证 → 登录方式 → 邮箱/密码 → 启用
+//    以及： Firestore Database → 创建数据库
 // ══════════════════════════════════════════════════════
 const firebaseConfig = {
-  apiKey: "AIzaSyDmugxUFU_mJT92nufegTeCQDAHqflbrus",
-  authDomain: "diabazo-9f7f2.firebaseapp.com",
-  projectId: "diabazo-9f7f2",
-  storageBucket: "diabazo-9f7f2.firebasestorage.app",
-  messagingSenderId: "428078541210",
-  appId: "1:428078541210:web:58b0ea1be62182f9cb3223"
+  apiKey: "AIzaSyCPI67HKMf-eeeWtcZCT3M0xvCAxVnhA14",
+  authDomain: "learn-cn-80ac0.firebaseapp.com",
+  projectId: "learn-cn-80ac0",
+  storageBucket: "learn-cn-80ac0.firebasestorage.app",
+  messagingSenderId: "1015005379324",
+  appId: "1:1015005379324:web:63e65742b694e79ee03579"
 };
 // ══════════════════════════════════════════════════════
 
@@ -608,6 +627,28 @@ function toggleAuthMode() {
     passwordInput.style.display = 'none';
     passwordInput.setAttribute('autocomplete', 'current-password');
   }
+}
+
+function signInWithGoogle() {
+  var provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider)
+    .then(function() { onAuthSuccess(); })
+    .catch(function(err) {
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+      showError('错误： ' + err.message);
+    });
+}
+
+function signInWithApple() {
+  var provider = new firebase.auth.OAuthProvider('apple.com');
+  provider.addScope('email');
+  provider.addScope('name');
+  firebase.auth().signInWithPopup(provider)
+    .then(function() { onAuthSuccess(); })
+    .catch(function(err) {
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+      showError('错误： ' + err.message);
+    });
 }
 
 function handleAuth() {
@@ -673,9 +714,12 @@ function onAuthSuccess() {
   showAppShell();
   firebaseReady = true;
   setSyncStatus('ok');
+  // Single-user mode: skip child setup entirely, use a fixed profile key
+  // so progress saves straight to the account without asking for a child name.
+  childKey = 'account';
+  localStorage.setItem('childKey', childKey);
   updateAppSub();
-  // Load child list & progress from cloud
-  loadChildList();
+  loadFromCloud();
 }
 
 function logout() {
@@ -731,12 +775,10 @@ function updateAppSub() {
   var el = document.getElementById('app-sub-line');
   if (!el) return;
   var dot = '<span class="sync-dot" id="sync-dot" title="同步状态"></span>';
-  if (childKey && firebaseReady) {
-    el.innerHTML = '👧 ' + childKey + ' · ☁️ ' + dot;
-  } else if (childKey) {
-    el.innerHTML = '👧 ' + childKey + ' · 📴 ' + dot;
+  if (firebaseReady) {
+    el.innerHTML = '学习希腊语单词 · ☁️ ' + dot;
   } else {
-    el.innerHTML = '学习希腊语单词 ' + dot;
+    el.innerHTML = '学习希腊语单词 · 📴 ' + dot;
   }
   setSyncStatus(firebaseReady ? 'ok' : 'off');
 }
@@ -1213,15 +1255,7 @@ function renderStats(){
   var headerHTML = '';
   if (user && firebaseReady) {
     headerHTML = '<div style="text-align:center;margin-bottom:16px;">' +
-      '<div style="font-size:14px;color:var(--text2);margin-bottom:4px;">👤 ' + user.email + ' (συνδεδεμένος)</div>';
-    if (childKey) {
-      headerHTML += '<div style="font-size:16px;font-weight:700;color:var(--purple-dark);margin-bottom:4px;">👧 ' + childKey + '</div>' +
-        '<button onclick="changeChildName()" style="background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit;">✏️ 更换孩子</button>';
-    }
-    headerHTML += '</div>';
-  } else {
-    headerHTML = '<div style="text-align:center;margin-bottom:16px;">' +
-      '<button onclick="showChildSetup()" style="background:var(--purple-light);border:1px solid #AFA9EC;border-radius:20px;padding:8px 18px;font-size:13px;color:var(--purple-dark);cursor:pointer;font-family:inherit;font-weight:600;margin-bottom:10px;">👧 孩子设置</button>' +
+      '<div style="font-size:14px;color:var(--text2);">👤 ' + user.email + ' (已登录)</div>' +
       '</div>';
   }
 

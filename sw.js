@@ -1,4 +1,4 @@
-var CACHE = 'diabazo-cn-v2';
+var CACHE = 'learn-cn-v2';
 var FILES = [
   './',
   './index.html',
