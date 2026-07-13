@@ -1382,10 +1382,14 @@ function renderAbTab() {
   html += '<div class="ab-section">';
   html += '<div class="ab-section-title">🔊 双元音 — 发音规则</div>';
   VOWEL_COMBOS.forEach(function(v) {
-    html += '<div class="ab-digraph-row" onclick="speakLetter(\''+v.say.replace(/'/g,"\\'")+'\')">';
+    var zh = (v.upper + ' ' + v.sound.replace(/「|」/g,'')).replace(/'/g,"\\'");
+    var greekWords = extractGreekWords(v.example);
+    var greekArrLit = "['" + greekWords.map(function(w){ return w.replace(/'/g,"\\'"); }).join("','") + "']";
+    var onclickCall = "speakMixed('"+zh+"', "+greekArrLit+")";
+    html += '<div class="ab-digraph-row" onclick="'+onclickCall+'">';
     html += '<div><div class="ab-digraph-letters">'+v.upper+'</div><div class="ab-digraph-lower">'+v.lower+'</div></div>';
     html += '<div style="flex:1;"><div class="ab-digraph-sound">'+v.sound+'</div><div class="ab-digraph-example">'+v.example+'</div></div>';
-    html += '<button class="ab-speak-btn" onclick="event.stopPropagation();speakLetter(\''+v.say.replace(/'/g,"\\'")+'\')">🔊</button>';
+    html += '<button class="ab-speak-btn" onclick="event.stopPropagation();'+onclickCall+'">🔊</button>';
     html += '</div>';
   });
   html += '</div>';
@@ -1394,10 +1398,14 @@ function renderAbTab() {
   html += '<div class="ab-section">';
   html += '<div class="ab-section-title">🔊 双辅音 — 发音规则</div>';
   DIGRAPHS.forEach(function(d) {
-    html += '<div class="ab-digraph-row" onclick="speakLetter(\''+d.say.replace(/'/g,"\\'")+'\')">';
+    var zh = (d.upper + ' ' + d.sound.replace(/「|」/g,'')).replace(/'/g,"\\'");
+    var greekWords = extractGreekWords(d.example);
+    var greekArrLit = "['" + greekWords.map(function(w){ return w.replace(/'/g,"\\'"); }).join("','") + "']";
+    var onclickCall = "speakMixed('"+zh+"', "+greekArrLit+")";
+    html += '<div class="ab-digraph-row" onclick="'+onclickCall+'">';
     html += '<div><div class="ab-digraph-letters">'+d.upper+'</div><div class="ab-digraph-lower">'+d.lower+'</div></div>';
     html += '<div style="flex:1;"><div class="ab-digraph-sound">'+d.sound+'</div><div class="ab-digraph-example">'+d.example+'</div></div>';
-    html += '<button class="ab-speak-btn" onclick="event.stopPropagation();speakLetter(\''+d.say.replace(/'/g,"\\'")+'\')">🔊</button>';
+    html += '<button class="ab-speak-btn" onclick="event.stopPropagation();'+onclickCall+'">🔊</button>';
     html += '</div>';
   });
   html += '</div>';
@@ -1445,6 +1453,31 @@ function speakChinese(text) {
     var u = new SpeechSynthesisUtterance(text);
     u.lang = 'zh-CN'; u.rate = 1.0;
     window.speechSynthesis.speak(u);
+  }, 120);
+}
+
+function extractGreekWords(str) {
+  var matches = str.match(/[\u0370-\u03FF\u1F00-\u1FFF]+/g);
+  return matches || [];
+}
+
+function speakMixed(zhText, greekWords) {
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  var i = 0;
+  function nextGreek() {
+    if (i >= greekWords.length) return;
+    var u = new SpeechSynthesisUtterance(greekWords[i]);
+    u.lang = 'el-GR'; u.rate = 0.85;
+    u.onend   = function(){ i++; setTimeout(nextGreek, 300); };
+    u.onerror = function(){ i++; setTimeout(nextGreek, 300); };
+    window.speechSynthesis.speak(u);
+  }
+  setTimeout(function() {
+    var u1 = new SpeechSynthesisUtterance(zhText);
+    u1.lang = 'zh-CN'; u1.rate = 1.0;
+    u1.onend = function(){ setTimeout(nextGreek, 250); };
+    window.speechSynthesis.speak(u1);
   }, 120);
 }
 
