@@ -1406,13 +1406,15 @@ function renderAbTab() {
   html += '<div class="ab-section">';
   html += '<div class="ab-section-title">📖 简单语法</div>';
   GRAMMAR_RULES.forEach(function(g) {
-    html += '<div class="ab-grammar-card" onclick="speakLetter(\''+g.say.replace(/'/g,"\\'")+'\')">';
+    var plainText = g.text.replace(/<[^>]*>/g,'');
+    html += '<div class="ab-grammar-card" onclick="speakChinese(\''+plainText.replace(/'/g,"\\'")+'\')">';
     html += '<div class="ab-grammar-title">🔊 '+g.title+'</div>';
     html += '<div class="ab-grammar-text">'+g.text+'</div>';
     if (g.examples && g.examples.length > 0) {
       html += '<div style="margin-top:8px;">';
       g.examples.forEach(function(ex) {
-        html += '<span class="ab-grammar-example">'+ex+'</span> ';
+        var plainEx = ex.replace(/<[^>]*>/g,'').replace(/→.*$/,'').trim();
+        html += '<span class="ab-grammar-example" onclick="event.stopPropagation();speak(\''+plainEx.replace(/'/g,"\\'")+'\')">'+ex+' 🔊</span> ';
       });
       html += '</div>';
     }
@@ -1432,6 +1434,16 @@ function speakLetter(text) {
   setTimeout(function() {
     var u = new SpeechSynthesisUtterance(text);
     u.lang = 'el-GR'; u.rate = 1.0;
+    window.speechSynthesis.speak(u);
+  }, 120);
+}
+
+function speakChinese(text) {
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  setTimeout(function() {
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-CN'; u.rate = 1.0;
     window.speechSynthesis.speak(u);
   }, 120);
 }
